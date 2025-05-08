@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>대구관광</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Yeon+Sung&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background-color: #fafafa; font-family: 'Yeon Sung', 'Nanum Brush Script', sans-serif; }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100vh; text-align: center; padding: 20px; overflow: auto; }
+        #startScreen { display: flex; }
+        .header-image, .loader-image, .content-image { max-width: 300px; width: 50%; height: auto; margin-bottom: 20px; }
+        h1 { font-size: 48px; color: #333; cursor: pointer; margin-bottom: 20px; }
+        h2 { font-size: 36px; color: #333; margin-bottom: 20px; }
+        p { font-size: 24px; color: #333; }
+        .tourist-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 800px; margin: 0 auto; }
+        .tourist-item { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 25px; font-size: 20px; width: 150px; text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .tourist-item:hover { background-color: #f0f0f0; transform: translateY(-3px); }
+        .back-button { display: inline-block; padding: 10px 20px; font-size: 18px; background-color: #333; color: #fff; text-decoration: none; border-radius: 5px; cursor: pointer; margin-top: 30px; }
+        .example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; width: 100%; max-width: 1800px; margin: 20px auto; }
+        .example-item { background-color: #fff; border: 1px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .example-item img { width: 100%; height: auto; border-radius: 10px; margin-bottom: 15px; }
+        .example-description { font-size: 20px; font-weight: bold; color: #000; margin-top: 10px; }
+        .example-item p { font-size: 18px; color: #444; margin-top: 5px; white-space: pre-line; }
+    </style>
+</head>
+<body>
+    <div id="startScreen" class="screen">
+        <img src="대구 마스코트.png" alt="대구 관광 지도 이미지" class="header-image">
+        <h1 id="startTitle">대구관광 지도</h1>
+    </div>
+
+    <div id="loadingScreen" class="screen">
+        <img src="img.gif" alt="로딩 이미지" class="loader-image">
+        <p>로딩중...</p>
+    </div>
+
+    <div id="touristMapScreen" class="screen">
+        <img src="대구 지도.png" alt="대구 관광지도" class="content-image">
+        <h2>대구 관광지 목록</h2>
+        <div class="tourist-items">
+            <div class="tourist-item" data-region="southwesternregion">동남/서남권</div>
+            <div class="tourist-item" data-region="northeasternregion">동북권</div>
+            <div class="tourist-item" data-region="JungguDistrict">중구권</div>
+        </div>
+        <h2>AI 추천 코스</h2>
+        <select id="themeSelect">
+            <option value="nature">자연</option>
+            <option value="history">역사</option>
+            <option value="shopping">쇼핑</option>
+        </select>
+        <select id="durationSelect">
+            <option value="half">반일</option>
+            <option value="full">1일</option>
+        </select>
+        <button onclick="recommendCourseAI()">추천받기</button>
+        <div id="aiCourseBox"></div>
+    </div>
+
+    <div id="touristDetailScreen" class="screen">
+        <h2 id="regionTitle">관광지 상세</h2>
+        <div id="regionContainer" class="example-grid"></div>
+        <div class="back-button" data-back="touristMapScreen">뒤로가기</div>
+    </div>
+</body>
+<script>
+      const southwesternregion = [
+    {
+        src: "디아크.jfif",
+        caption: "디아크",
+        caption2: "대구 달성군 다사읍에 위치한 디아크(The ARC)는 낙동강과 금호강이 만나는 지점에 세워진 복합문화공간으로,\n"+
+        " 물수제비와 물고기의 비상을 형상화한 독특한 외관이 특징입니다. 이 건축물은 세계적인 건축가 하니 라시드(Hani Rashid)와 리즈 앤 쿠튀르(Lise Anne Couture)가 이끄는\n"+
+        "뉴욕 기반의 Asymptote Architecture가 설계하였으며, 국내 건축가 은동신과 이가종합건축사사무소가 협력하였습니다.",
+       mapLink: "https://www.google.com/maps?q=디아크+대구"
+      },
+      {
+        src: "도동서원.JPG",
+        caption: "도동서원",
+        caption2: "도동서원은 대구 달성군 구지면에 위치한 조선 중기의 서원으로, 한훤당 김굉필을 배향하기 위해 건립된 유교 교육기관입니다.\n"+
+                   "보물 제350호로 지정되어 있으며, 전통 유교 건축 양식을 잘 간직하고 있어 역사적·건축적 가치가 큽니다.",
+        mapLink: "https://www.google.com/maps?q=도동서원+대구"
+      },
+      {
+        src: "달성습지.JPG",
+        caption: "달성습지",
+        caption2: " 달성습지는 대구 달서구와 달성군 일대에 위치한 약 200만 ㎡ 규모의 하천 습지로, 낙동강과 금호강이 만나는 지점에 형성되어 있습니다 .\n"+
+                   "이곳은 멸종위기종인 맹꽁이를 비롯하여 다양한 철새와 습지 식물이 서식하는 생태계의 보고로,\n"+ 
+                   "생태탐방로와 자전거도로가 잘 정비되어 있어 자연을 체험하며 산책이나 라이딩을 즐기기에 적합한 장소입니다 .",
+         mapLink: "https://www.google.com/maps?q=달성습지"
+      },
+      {
+        src: "대구 수목원.jpg",
+        caption: "대구 수목원",
+        caption2: " 대구수목원은 대구광역시 달서구 화암로 342에 위치한 도심형 수목원으로.\n"+
+                   "1986년부터 1990년까지 쓰레기 매립장이었던 부지를 생태적으로 복원하여 2002년에 개원하였습니다.\n"+ 
+                   "현재는 약 74,000평(약 245,000㎡)의 면적에 1,750여 종의 식물과 다양한 테마 정원이 조성되어 있어 시민들의 휴식과 자연 학습 공간으로 활용되고 있습니다 .",
+        mapLink: "https://www.google.com/maps?q=대구+수목원"
+      },
+    ];
+
+    const northeasternregion = [
+        {
+            src: "동화사.jpg",
+            caption: "동화사",
+            caption2: " 동화사는 대구광역시 동구 팔공산에 위치한 유서 깊은 사찰로,\n"+
+                      "통일신라 흥덕왕 7년(832년)에 심지왕사가 중창하였습니다.\n"+
+                      "겨울에도 오동나무 꽃이 피었다는 전설에서 '동화사(桐華寺)'라는 이름이 유래되었으며, 대한불교조계종 제9교구 본사로서 한국 불교의 중심지 중 하나입니다. ",
+            mapLink: "https://www.google.com/maps?q=동화사+대구"
+        },
+        {
+            src: "도동 촉백나무.jpg",
+            caption: "도동측백나무숲",
+            caption2: "대구 도동 측백나무 숲은 대구광역시 동구 도동 산180번지에 위치한 천연기념물 제1호로,\n"+
+                        "약 700여 그루의 측백나무가 절벽의 바위틈에 자생하는 희귀한 군락지입니다.\n"+
+                        "이 숲은 측백나무의 남방 한계선을 보여주는 식물학적 가치와 함께, 약 500년 이상의 역사를 지닌 생태문화유산으로 보존되고 있습니다 .",
+            mapLink: "https://www.google.com/maps?q=도동측백나무숲"
+        },
+        {
+            src: "하중도.webp",
+            caption: "하중도",
+            caption2: "대구 북구 노곡동에 위치한 금호강 하중도는 퇴적물로 형성된 약 22만 ㎡ 규모의 섬으로, 과거 침수지였으나 생태공원으로 탈바꿈하여 시민들의 휴식처로 사랑받고 있습니다 .\n"+
+                        "이곳은 봄에는 유채꽃과 청보리, 가을에는 코스모스와 억새가 장관을 이루며, ‘금호꽃섬’이라는 이름으로도 알려져 있습니다 .",
+            mapLink: "https://www.google.com/maps?q=하중도+대구"
+        },
+        {
+            src: "갓바위.jpg",
+            caption: "갓바위",
+            caption2: "팔공산 남쪽 능선에 위치한 통일신라 시대의 석불좌상으로, 머리에 갓 모양의 자연석을 얹은 독특한 형태로 인해 '갓바위'라 불립니다.\n"+
+                        "갓바위 석불은 통일신라 9세기 전후에 조성된 불상으로, 당시 불교의 민간 확산과 신앙 조형물의 지방 전파 양상을 보여주는 중요한 역사유물입니다.",
+            mapLink: "https://www.google.com/maps?q=갓바위+팔공산"
+        },
+    ];
+    const JungguDistrict = [
+        {
+            src: " 약령시 박물관.JPG",
+            caption: "약령시 박물관",
+            caption2: "대구약령시한의약박물관은 350여 년의 전통을 지닌 대구 약령시의 역사와 한의약 문화를 보존하고 체험할 수 있는 전문 박물관입니다.\n"+
+                        "3층 역사전시실에서는 약령시의 유래와 발전 과정을 다양한 시각 자료로 소개하며, 2층 체험실에서는 한방 족욕, 한방 비누 만들기 등 다양한 체험 프로그램을 제공합니다. ",
+            mapLink: "https://www.google.com/maps?q=약령시+박물관+대구"
+        },
+        {
+            src: "동성로.jfif",
+            caption: "동성로",
+            caption2: "동성로는 대구광역시 중구에 위치한 대표적인 중심 상업지구로, 1907년 대구읍성의 동쪽 성벽이 철거된 자리에 형성된 거리입니다. \n"+
+                        "현재는 다양한 상점, 음식점, 문화 시설이 밀집해 있어 대구의 쇼핑과 문화의 중심지로 자리매김하고 있습니다.",
+            mapLink: "https://www.google.com/maps?q=동성로+대구"
+        },
+        {
+            src: "경삼감영 공원.jfif",
+            caption: "경삼감영 공원",
+            caption2: "경상감영공원은 조선시대 경상도 관찰사가 집무하던 경상감영 터에 조성된 역사공원으로, 선화당과 징청각 등 주요 건물이 복원되어 있습니다.\n"+
+                        "현재는 사적 제538호로 지정되어 대구 도심 속에서 역사와 휴식을 함께 즐길 수 있는 장소로 사랑받고 있습니다.",
+            mapLink: "https://www.google.com/maps?q=경상감영공원+대구"
+        },
+        {
+            src: "2.28 중앙공원.jpg",
+            caption: "2.28 중앙공원",
+            caption2: "2·28기념중앙공원은 1960년 대구에서 발생한 2·28 학생 민주운동을 기념하기 위해 조성된 도심 공원으로, 민주주의의 상징적 공간입니다.\n"+
+                        "동성로 중심에 위치하여 시민들의 휴식처이자 다양한 문화행사가 열리는 복합문화공간으로 활용되고 있습니다.",
+            mapLink: "https://www.google.com/maps?q=2.28+중앙공원+대구"
+        },
+
+    ];
+
+    function loadRegion(regionKey) {
+        const regionMap = { southwesternregion, northeasternregion, JungguDistrict };
+        const regionData = regionMap[regionKey];
+        const container = document.getElementById("regionContainer");
+        const title = document.getElementById("regionTitle");
+
+        container.innerHTML = "";
+        if (!regionData) return;
+
+        title.textContent = {
+            southwesternregion: "동남/서남권 관광지",
+            northeasternregion: "동북권 관광지",
+            JungguDistrict: "중구권 관광지"
+        }[regionKey];
+
+        regionData.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "example-item";
+            div.innerHTML = `
+                <img src="${item.src}" alt="${item.caption}">
+                <p>${item.caption}</p>
+                <p class="example-description">${item.caption2}</p>
+                ${item.mapLink ? `<a href="${item.mapLink}" target="_blank" class="back-button" style="background:#007bff;margin-top:15px;">지도에서 보기</a>` : ""}
+            `;
+            container.appendChild(div);
+        });
+
+        showScreen("touristDetailScreen"); // 이 부분이 누락되어 있었을 수 있습니다.
+    }
+
+    function recommendCourseAI() {
+        const theme = document.getElementById("themeSelect").value;
+        const duration = document.getElementById("durationSelect").value;
+        const resultBox = document.getElementById("aiCourseBox");
+
+        const courseMap = {
+            nature: {
+                half: [["달성습지", "대구 수목원"]],
+                full: [["달성습지", "디아크", "대구 수목원"]]
+            },
+            history: {
+                half: [["도동서원", "동화사"]],
+                full: [["도동서원", "갓바위", "동화사"]]
+            },
+            shopping: {
+                half: [["동성로", "약령시 박물관"]],
+                full: [["동성로", "약령시 박물관", "2.28 중앙공원"]]
+            }
+        };
+
+        const courseList = courseMap[theme]?.[duration];
+        if (!courseList) {
+            resultBox.textContent = "추천할 코스가 없습니다.";
+            return;
+        }
+
+        const course = courseList[Math.floor(Math.random() * courseList.length)];
+        const gmapQuery = `https://www.google.com/maps/search/?api=1&query=${course.map(encodeURIComponent).join(' AND ')}`;
+        resultBox.innerHTML = `
+            <strong>${duration === "half" ? "⏱ 반일" : "🗓 1일"} ${getThemeKor(theme)} 테마 추천:</strong><br>
+            - ${course.join("<br>- ")}<br><br>
+            <a href="${gmapQuery}" target="_blank" class="back-button" style="background:#007bff">📍 지도에서 코스 보기</a>
+        `;
+    }
+
+    function getThemeKor(theme) {
+        return {
+            nature: "자연",
+            history: "역사",
+            shopping: "쇼핑"
+        }[theme] || "";
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        const target = document.getElementById(id);
+        if (target) target.style.display = 'flex';
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        showScreen('startScreen');
+
+        document.getElementById("startTitle").addEventListener("click", () => {
+            showScreen("loadingScreen");
+            setTimeout(() => showScreen("touristMapScreen"), 2000);
+        });
+
+        document.querySelectorAll(".tourist-item").forEach(item => {
+            item.addEventListener("click", () => {
+                const regionKey = item.getAttribute("data-region");
+                loadRegion(regionKey);
+            });
+        });
+
+        document.querySelectorAll(".back-button").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const backId = btn.getAttribute("data-back");
+                if (backId) showScreen(backId);
+            });
+        });
+    });
+</script>
+
+</html>
